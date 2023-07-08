@@ -1,7 +1,5 @@
-import subprocess
+import subprocess, time, re, hashlib, tempfile
 from typing import Optional
-import time
-import re
 import numpy as np
 from pycuda.compiler import compile as cuda_compile # type: ignore
 from tinygrad.helpers import DEBUG, getenv, fromimport, colored
@@ -49,16 +47,17 @@ else:
   import pycuda.driver as cuda # type: ignore
   class RawCUDABuffer(RawBufferCopyInOut): # type: ignore
     def __init__(self, size, dtype): super().__init__(size, dtype, cuda.mem_alloc(size * dtype.itemsize)) # type: ignore
-    def _copyin(self, x:np.ndarray, stream:Optional[cuda.Stream]=None): cuda.memcpy_htod_async(self._buf, x, stream) # type: ignore
+    def _copyin(self, x:np.ndarray, stream:Optional[cuda.Stream]=None): cuda.memcpy_htod_async(self._buf, x.ravel(), stream) # type: ignore
     def _copyout(self, x:np.ndarray): cuda.memcpy_dtoh(x, self._buf) # type: ignore
 
 class CUDAProgram:
   def __init__(self, name:str, prg:str, binary=False):
     try:
       if DEBUG >= 6:
-        with open("/tmp/cubin", "wb") as f:
+        fn = f"{tempfile.gettempdir()}/tinycuda_{hashlib.md5(prg.encode('utf-8')).hexdigest()}"
+        with open(fn, "wb") as f:
           f.write(cuda_compile(prg, target="cubin", no_extern_c=True))
-        sass = subprocess.check_output(['nvdisasm', '/tmp/cubin']).decode('utf-8')
+        sass = subprocess.check_output(['nvdisasm', fn]).decode('utf-8')
         print(sass)
       if not binary: prg = cuda_compile(prg, target="ptx", no_extern_c=True, options=['-Wno-deprecated-gpu-targets']).decode('utf-8')
     except cuda.CompileError as e:
