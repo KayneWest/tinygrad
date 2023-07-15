@@ -61,3 +61,6 @@ def evaluate(model, X_test, Y_test, num_classes=None, BS=128, return_predict=Fal
   print("test set accuracy is %f" % acc)
   return (acc, Y_test_pred) if return_predict else acc
 
+class OptimizerGroup(list): 
+  def zero_grad(self): return (optimizer.zero_grad() for optimizer in self)
+  def step(self): return (optimzer.step for optimzer in self)
