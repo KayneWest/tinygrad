@@ -190,7 +190,7 @@ class Tensor:
 
   # https://www.tensorflow.org/api_docs/python/tf/keras/initializers/GlorotUniform
   @staticmethod
-  def glorot_uniform(*shape, **kwargs) -> Tensor: return Tensor.uniform(*shape, **kwargs).mul((6/(shape[0]+prod(shape[1:])))**0.5)
+  def glorot_uniform(*shape, magnitude=6, **kwargs) -> Tensor: return Tensor.uniform(*shape, **kwargs).mul((magnitude/(shape[0]+prod(shape[1:])))**0.5)
 
   # https://pytorch.org/docs/stable/_modules/torch/nn/init.html#kaiming_uniform_
   @staticmethod
